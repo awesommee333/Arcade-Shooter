@@ -1,0 +1,36 @@
+{
+    "author": "andyhsstudent@gmail.com",
+    "dependencies": {},
+    "keywords": [],
+    "name": "arcade-shooter",
+    "pebble": {
+        "capabilities": [
+            "health"
+        ],
+        "displayName": "Arcade Shooter",
+        "enableMultiJS": true,
+        "messageKeys": [],
+        "projectType": "native",
+        "resources": {
+            "media": [
+                {
+                    "file": "images/SettingsIcon.png",
+                    "name": "SETTINGS_ICON",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                }
+            ]
+        },
+        "sdkVersion": "3",
+        "targetPlatforms": [
+            "aplite",
+            "basalt",
+            "chalk"
+        ],
+        "uuid": "6136687c-7c07-4af5-8cba-7c7b7c4df511",
+        "watchapp": {
+            "watchface": false
+        }
+    },
+    "version": "1.0.0"
+}
