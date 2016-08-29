@@ -78,7 +78,7 @@ void drawSimpleShip(Layer *layer, GContext *gcx, int center, int id){
 void initShips(){
   allShips[0]=(Ship){
     .draw=&drawSimpleShip,
-    .speed=50,
+    .speed=HEIGHT/2,
     .length=10,
     .id=0
   };
