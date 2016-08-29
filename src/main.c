@@ -12,12 +12,33 @@ void configButtons(Window *window){
   window_single_click_subscribe(BUTTON_ID_SELECT, enterStore);
 }
 
+void drawGame(Layer *layer, GContext *gcx){
+  handlePlayer(buttonsPressed, FPS);
+  drawPlayerData(layer, gcx);
+}
+
+void timerHandler(void *context){
+  layer_mark_dirty(game_layer);
+  app_timer_register(1000.0/FPS, timerHandler, NULL);
+}
+
 void init_game(Window *window){
+  Layer *window_layer=window_get_root_layer(window);
+  GRect bounds=layer_get_bounds(window_layer);
   
+  game_layer=layer_create(bounds);
+  
+  layer_add_child(window_layer, game_layer);
+  layer_set_update_proc(game_layer, drawGame);
+  
+  initPlayer();
+  
+  app_timer_register(1000.0/FPS, timerHandler, NULL);
 }
 
 void close_game(Window *window){
-  
+  deinitPlayer();
+  layer_destroy(game_layer);
 }
 
 void init_store(Window *window){
@@ -200,6 +221,8 @@ void deinit(){
   window_destroy(window);
   window_destroy(game_window);
   window_destroy(store_window);
+  window_destroy(settings_window);
+  window_destroy(help_window);
 }
 
 int main(){

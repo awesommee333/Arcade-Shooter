@@ -1,6 +1,7 @@
 #pragma once
 #include "usefulFunctions.h"
 #include "PlayerData.h"
+#include "Enemies.h"
 
 #define NUM_STORE_ITEMS 10
 #define MAX_STORE_TITLE 16
@@ -10,6 +11,8 @@
 
 #define MAX_DIFFICULTY 4
 #define MAX_SPEED 3
+
+#define FPS 30.0
 
 Window *game_window;
 Window *menu_window;
