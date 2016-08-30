@@ -2,6 +2,7 @@
 #include "usefulFunctions.h"
 #include "PlayerData.h"
 #include "Enemies.h"
+#include "ShipStructs.h"
 
 #define NUM_STORE_ITEMS 10
 #define MAX_STORE_TITLE 16

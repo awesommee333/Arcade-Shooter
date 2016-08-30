@@ -31,6 +31,7 @@ void init_game(Window *window){
   layer_add_child(window_layer, game_layer);
   layer_set_update_proc(game_layer, drawGame);
   
+  initAllShips();
   initPlayer();
   
   app_timer_register(1000.0/FPS, timerHandler, NULL);

@@ -1,13 +1,5 @@
 #include "PlayerData.h"
 
-void updateProjectiles(double fps){
-  for(int i=0;i<numProjectiles;i++){
-    Vec2d tmp=allProjectiles[i].Vel;
-    scaleVec(&tmp, &tmp, allProjectiles[i].data->speed/fps);
-    addVecs(&allProjectiles[i].coords, &tmp, &allProjectiles[i].coords);
-  }
-}
-
 void handlePlayer(Buttons pressedButtons, double fps){
   if(pressedButtons.up){
     shipCoords-=currentShip->speed/fps;
@@ -23,109 +15,64 @@ void handlePlayer(Buttons pressedButtons, double fps){
   prevShotDelay++;
   
   if(prevShotDelay>currentWeapon->shotDelay){
-    currentWeapon->fire((Vec2d){currentShip->length, shipCoords}, currentWeapon->id);
+    currentWeapon->fire((Vec2d){currentShip->length, shipCoords}, currentWeapon);
     prevShotDelay=0;
   }
   
-  updateProjectiles(fps);
+  updateProjectiles(currentWeapon, fps);
 }
 
 void enableAccel(bool enable){
   
 }
 
-void pushBullet(Vec2d coords, Vec2d vel, ProjectileData *projData){
-  for(int i=MAX_PROJ_NUM-1;i>0;i--){
-    allProjectiles[i]=allProjectiles[i-1];
-  }
-  allProjectiles[0]=(Projectile){coords, vel, projData};
-  numProjectiles++;
-  if(numProjectiles>=MAX_PROJ_NUM)
-    numProjectiles=MAX_PROJ_NUM;
-}
-
-void pullBullet(int id){
-  for(int i=id+1;i<MAX_PROJ_NUM;i++){
-    allProjectiles[i-1]=allProjectiles[i];
-  }
-  numProjectiles--;
-  if(numProjectiles<0)
-    numProjectiles=0;
-}
-
-void drawSimpleProj(Layer *layer, GContext *gcx, Vec2d center, int id){
-  graphics_context_set_fill_color(gcx, GColorWhite);
-  GRect bullet={{(int)center.x-1, (int)center.y-1}, {3, 3}};
-  
-  graphics_fill_rect(gcx, bullet, 0, GCornerNone);
-}
-
-void initProjectileTypes(){
-  projectileTypes[0]=(ProjectileData){
-    .speed=80.0,
-    .damage=1.0,
-    .draw=drawSimpleProj
-  };
-}
-
-void drawSimpleShip(Layer *layer, GContext *gcx, int center, int id){
-  graphics_context_set_fill_color(gcx, GColorWhite);
-  GRect shipMain={{0, center-9}, {10, 19}};
-  
-  graphics_fill_rect(gcx, shipMain, 3, GCornerNone);
-}
-
-void initShips(){
-  allShips[0]=(Ship){
-    .draw=&drawSimpleShip,
-    .speed=HEIGHT/2,
-    .length=10,
-    .id=0
-  };
-}
-
-void setShip(int shipID){
-  free(currentShip);
+void setShip(PlayerShip *ship, bool freeShip){
+  if(freeShip)
+    free(currentShip);
   currentShip=malloc(sizeof(Ship));
-  memcpy(currentShip, &allShips[shipID], sizeof(Ship));
+  memcpy(currentShip, ship->actualShip, sizeof(Ship));
+  if(ship->custom){
+    currentShip->maxHealth=ship->customMaxHealth;
+    currentShip->maxArmor=ship->customMaxArmor;
+    currentShip->armorRegen=ship->customArmorRegen;
+    currentShip->speed=ship->customSpeed;
+  }
 }
 
-void setWeapon(int weaponID){
-  free(currentWeapon);
-  currentWeapon=malloc(sizeof(Weapon));
-  memcpy(currentWeapon, &allWeapons[weaponID], sizeof(Weapon));
+void setWeapon(PlayerWeapon *weapon, bool freeWeapon){
+  if(freeWeapon)
+    free(currentWeapon);
+  int add=weapon->actualWeapon->maxProjectiles;
+  if(weapon->custom)
+    add=weapon->customMaxProjectiles;
+  currentWeapon=malloc(sizeof(Weapon)+add*sizeof(Projectile));
+  memcpy(currentWeapon, weapon->actualWeapon, sizeof(Weapon));
+  if(weapon->custom){
+    currentWeapon->maxProjectiles=weapon->customMaxProjectiles;
+    currentWeapon->shotDelay=weapon->customShotDelay;
+  }
 }
 
-void basicWeaponDraw(Layer* layer, GContext* gcx, Vec2d coords, int id){
-  graphics_context_set_fill_color(gcx, GColorRed);
-  
-  GRect shipShoot={{coords.x , coords.y-1}, {5, 3}};
-  graphics_fill_rect(gcx, shipShoot, 0, GCornerNone);
+void initPlayerShips(){
+  allPlayerShips[0]=(PlayerShip){
+    .actualShip=&allShips[0],
+    .custom=false
+  };
 }
 
-void basicWeaponFire(Vec2d coords, int id){
-  pushBullet(coords, (Vec2d){1.0, 0.0}, &projectileTypes[0]);
-}
-
-void initWeapons(){
-  prevShotDelay=0;
-  allWeapons[0]=(Weapon){
-    .shotDelay=10,
-    .draw=&basicWeaponDraw,
-    .fire=&basicWeaponFire,
-    .id=0
+void initPlayerWeapons(){
+  allPlayerWeapons[0]=(PlayerWeapon){
+    .actualWeapon=&allWeapons[0],
+    .custom=false
   };
 }
 
 void initPlayer(){
-  initProjectileTypes();
-  initShips();
-  initWeapons();
+  initPlayerShips();
+  initPlayerWeapons();
   
-  currentShip=malloc(sizeof(Ship));
-  memcpy(currentShip, &allShips[0], sizeof(Ship));
-  currentWeapon=malloc(sizeof(Weapon));
-  memcpy(currentWeapon, &allWeapons[0], sizeof(Weapon));
+  setShip(&allPlayerShips[0], false);
+  setWeapon(&allPlayerWeapons[0], false);
   
   shipCoords=HEIGHT/2.0;
   prevShotDelay=0;
@@ -137,13 +84,13 @@ void deinitPlayer(){
 }
 
 void drawPlayerProjectiles(Layer *layer, GContext *gcx){
-  for(int i=0;i<numProjectiles;i++){
-    allProjectiles[i].data->draw(layer, gcx, allProjectiles[i].coords, allProjectiles[i].data->id);
+  for(int i=0;i<currentWeapon->numProjectiles;i++){
+    currentWeapon->projectiles[i].data->draw(layer, gcx, currentWeapon->projectiles[i].coords, currentWeapon->projectiles[i].data->id);
   }
 }
 
 void drawPlayerData(Layer *layer, GContext *gcx){
-  currentShip->draw(layer, gcx, shipCoords, currentShip->id);
-  currentWeapon->draw(layer, gcx, (Vec2d){currentShip->length, shipCoords}, currentWeapon->id);
+  currentShip->draw(layer, gcx, shipCoords, currentShip);
+  currentWeapon->draw(layer, gcx, (Vec2d){currentShip->length, shipCoords}, currentWeapon);
   drawPlayerProjectiles(layer, gcx);
 }
