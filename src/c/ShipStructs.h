@@ -23,31 +23,34 @@ typedef struct Projectile{
 typedef struct Weapon{
   GBitmap *icon;
   int shotDelay;
-  void (*fire)(Vec2d, struct Weapon*);//fire(Vec2d coords)
+  void (*fire)(Vec2d, struct Weapon*, bool enem);//fire(Vec2d coords)
   void (*draw)(Layer*, GContext*, Vec2d, struct Weapon*);//draw(Vec2d center)
+  double damageMultiplier;
   int maxProjectiles;
   int numProjectiles;
-  Projectile projectiles[];//why does mallocing this to expand it still give and error when I try to access projectiles[num that's greater than 1?]
+  int height;
+  Projectile projectiles[];
 }Weapon;
 
 typedef struct Ship{
   GBitmap *icon;
-  void (*draw)(Layer*, GContext*, int, struct Ship*);
-  void (*testCollision)(Vec2d*);
+  void (*draw)(Layer*, GContext*, struct Ship*);
+  bool (*testCollision)(Vec2d*, struct Ship*);
   double health, maxHealth;
   double armor, armorRegen, maxArmor;
   double speed;
-  int length;
+  int height, length;
+  Vec2d coords;
 }Ship;
 
 typedef struct PlayerShip{
   Ship *actualShip;
   bool custom;
+  GBitmap *customIcon;
   int customMaxHealth;
   int customArmorRegen, customMaxArmor;
   int customSpeed;
   int cost;
-  double damageMultiplier;
   bool bought;
   char name[MAX_NAME_SIZE];
 } PlayerShip;
@@ -55,6 +58,7 @@ typedef struct PlayerShip{
 typedef struct PlayerWeapon{
   Weapon *actualWeapon;
   bool custom;
+  double customDamageMultiplier;
   int customShotDelay;
   int customMaxProjectiles;
   int cost;
@@ -62,10 +66,11 @@ typedef struct PlayerWeapon{
   char name[MAX_NAME_SIZE];
 }PlayerWeapon;
 
-typedef struct EnemShip{
-  Ship ship;
-  Weapon weapon;
-}EnemShip;
+typedef struct FullShip{
+  Ship *ship;
+  Weapon *weapon;
+  int prevShot;
+}FullShip;
 
 void pushBullet(Weapon *currentWeapon, Vec2d coords, Vec2d vel, ProjectileData *projData);
 void pullBullet(Weapon *currentWeapon, int id);
@@ -79,3 +84,9 @@ void initWeapons();
 void initProjectileTypes();
 void initAllShips();
 void updateProjectiles(Weapon *currentWeapon, double fps);
+
+void fireShip(FullShip *comboShip, bool enem);
+void drawShip(Layer *layer, GContext *gcx, FullShip *comboShip, bool playerShip);
+void handleCollisions(FullShip *ship, FullShip *ships[], int numShips);
+
+int timeFrames;

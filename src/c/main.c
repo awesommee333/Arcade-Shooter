@@ -12,12 +12,29 @@ void configButtons(Window *window){
   window_single_click_subscribe(BUTTON_ID_SELECT, enterStore);
 }
 
+void lose(){
+  window_stack_pop(true);
+}
+
+void handleAllCollisions(){
+  handleCollisions(fullPlayerShip, allEnemies, numEnems);
+  for(int i=0;i<numEnems;i++){
+    handleCollisions(allEnemies[i], &fullPlayerShip, 1);
+  }
+}
+
 void drawGame(Layer *layer, GContext *gcx){
   handlePlayer(buttonsPressed, FPS);
+  handleEnems(FPS);
+  handleAllCollisions();
+  if(fullPlayerShip->ship->health<=0.0)
+    lose();
   drawPlayerData(layer, gcx);
+  drawEnems(layer, gcx);
 }
 
 void timerHandler(void *context){
+  timeFrames++;
   layer_mark_dirty(game_layer);
   app_timer_register(1000.0/FPS, timerHandler, NULL);
 }
@@ -33,6 +50,8 @@ void init_game(Window *window){
   
   initAllShips();
   initPlayer();
+  
+  tmpEnemInit();
   
   app_timer_register(1000.0/FPS, timerHandler, NULL);
 }

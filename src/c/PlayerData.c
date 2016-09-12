@@ -2,22 +2,17 @@
 
 void handlePlayer(Buttons pressedButtons, double fps){
   if(pressedButtons.up){
-    shipCoords-=currentShip->speed/fps;
-    if(shipCoords<0.0)
-      shipCoords=0.0;
+    currentShip->coords.y-=currentShip->speed/fps;
+    if(currentShip->coords.y<0.0)
+      currentShip->coords.y=0.0;
   }
   else if(pressedButtons.down){
-    shipCoords+=currentShip->speed/fps;
-    if(shipCoords>HEIGHT)
-      shipCoords=HEIGHT;
+    currentShip->coords.y+=currentShip->speed/fps;
+    if(currentShip->coords.y>HEIGHT)
+      currentShip->coords.y=HEIGHT;
   }
   
-  prevShotDelay++;
-  
-  if(prevShotDelay>currentWeapon->shotDelay){
-    currentWeapon->fire((Vec2d){currentShip->length, shipCoords}, currentWeapon);
-    prevShotDelay=0;
-  }
+  fireShip(fullPlayerShip, false);
   
   updateProjectiles(currentWeapon, fps);
 }
@@ -37,6 +32,7 @@ void setShip(PlayerShip *ship, bool freeShip){
     currentShip->armorRegen=ship->customArmorRegen;
     currentShip->speed=ship->customSpeed;
   }
+  fullPlayerShip->ship=currentShip;
 }
 
 void setWeapon(PlayerWeapon *weapon, bool freeWeapon){
@@ -51,6 +47,7 @@ void setWeapon(PlayerWeapon *weapon, bool freeWeapon){
     currentWeapon->maxProjectiles=weapon->customMaxProjectiles;
     currentWeapon->shotDelay=weapon->customShotDelay;
   }
+  fullPlayerShip->weapon=currentWeapon;
 }
 
 void initPlayerShips(){
@@ -71,26 +68,23 @@ void initPlayer(){
   initPlayerShips();
   initPlayerWeapons();
   
+  fullPlayerShip=malloc(sizeof(FullShip));
+  fullPlayerShip->prevShot=0;
+  
   setShip(&allPlayerShips[0], false);
   setWeapon(&allPlayerWeapons[0], false);
   
-  shipCoords=HEIGHT/2.0;
-  prevShotDelay=0;
+  currentShip->coords.x=0.0;
+  currentShip->coords.y=HEIGHT/2.0;
+  currentShip->health=currentShip->maxHealth;
 }
 
 void deinitPlayer(){
   free(currentShip);
   free(currentWeapon);
-}
-
-void drawPlayerProjectiles(Layer *layer, GContext *gcx){
-  for(int i=0;i<currentWeapon->numProjectiles;i++){
-    currentWeapon->projectiles[i].data->draw(layer, gcx, currentWeapon->projectiles[i].coords, currentWeapon->projectiles[i].data->id);
-  }
+  free(fullPlayerShip);
 }
 
 void drawPlayerData(Layer *layer, GContext *gcx){
-  currentShip->draw(layer, gcx, shipCoords, currentShip);
-  currentWeapon->draw(layer, gcx, (Vec2d){currentShip->length, shipCoords}, currentWeapon);
-  drawPlayerProjectiles(layer, gcx);
+  drawShip(layer, gcx, fullPlayerShip, true);
 }

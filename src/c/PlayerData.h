@@ -5,12 +5,10 @@
 #define NUM_PLAYER_SHIPS 1
 #define NUM_PLAYER_WEAPONS 1
 
-Window *ship_store;
-Window *weapon_store;
-Window *upgrades_store;
-MenuLayer *ship_menu;
-MenuLayer *weapon_menu;
-MenuLayer *upgrades_menu;
+#define NUM_STORE_MENUS 3
+
+Window *buy_stuff;
+MenuLayer *store_menus[NUM_STORE_MENUS];
 
 void handlePlayer(Buttons pressedButtons, double fps);
 void enableAccel(bool enable);
@@ -26,8 +24,11 @@ void drawPlayerData(Layer *layer, GContext *gcx);
 Ship *currentShip;
 Weapon *currentWeapon;
 
+FullShip *fullPlayerShip;
+
 PlayerShip allPlayerShips[NUM_PLAYER_SHIPS];
 PlayerWeapon allPlayerWeapons[NUM_PLAYER_WEAPONS];
 
-double shipCoords;
-int prevShotDelay;
+double maxHealthMult;
+double damageMult;
+double armorRegenMult;
